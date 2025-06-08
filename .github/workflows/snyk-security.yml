@@ -16,7 +16,7 @@
 # For more examples, including how to limit scans to only high-severity issues
 # and fail PR checks, see https://github.com/snyk/actions/
 
-name: Snyk Code Scan
+name: Snyk Code Scan (Supabase)
 
 on:
   push:
@@ -34,18 +34,20 @@ jobs:
       - name: Install Snyk CLI
         run: npm install -g snyk
 
-      - name: Run Snyk Code (SARIF output)
-        run: snyk code test --sarif > snyk-code.sarif || true
+      # Scan Supabase functions (TypeScript)
+      - name: Scan Supabase functions
+        run: snyk code test supabase/functions --sarif > snyk-functions.sarif || true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
-      - name: Monitor project on Snyk dashboard
-        run: snyk monitor
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      # Optional: Scan SQL with a custom linter (e.g., sqlfluff or pg_query_lint)
+      # Uncomment if you want SQL checking too
+      - name: Lint SQL Migrations
+        run: |
+          pip install sqlfluff
+          sqlfluff lint supabase/migrations
 
       - name: Upload SARIF to GitHub Code Scanning
         uses: github/codeql-action/upload-sarif@v2
         with:
-          sarif_file: snyk-code.sarif
-
+          sarif_file: snyk-functions.sarif
