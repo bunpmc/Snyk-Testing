@@ -30,13 +30,25 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
       - name: Install jq
-        run: sudo apt-get install -y jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Show login.sarif content (debug)
+        run: cat login.sarif || echo "login.sarif not found or empty"
+
+      - name: Show login_snyk_vul_test.sarif content (debug)
+        run: cat login_snyk_vul_test.sarif || echo "login_snyk_vul_test.sarif not found or empty"
 
       - name: Combine SARIF files safely
         shell: bash
         run: |
           if [[ -s login.sarif && -s login_snyk_vul_test.sarif ]]; then
-            jq -s '.[0].runs += .[1].runs | .[0]' login.sarif login_snyk_vul_test.sarif > snyk-functions.sarif
+            if jq empty login.sarif && jq empty login_snyk_vul_test.sarif; then
+              jq -s '.[0].runs += .[1].runs | .[0]' login.sarif login_snyk_vul_test.sarif > snyk-functions.sarif
+            else
+              echo "One or both SARIF files are invalid JSON, fallback to single file or empty SARIF"
+              if jq empty login.sarif; then cp login.sarif snyk-functions.sarif; else echo '{}' > snyk-functions.sarif; fi
+              if jq empty login_snyk_vul_test.sarif; then cp login_snyk_vul_test.sarif snyk-functions.sarif; fi
+            fi
           elif [[ -s login.sarif ]]; then
             cp login.sarif snyk-functions.sarif
           elif [[ -s login_snyk_vul_test.sarif ]]; then
