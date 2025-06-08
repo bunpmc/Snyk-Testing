@@ -55,6 +55,8 @@ jobs:
         # Use || true to not fail the pipeline
       - name: Snyk Code test
         run: snyk code test supabase/functions/login_snyk_vul_test --sarif > snyk-code.sarif || true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
         # Runs Snyk Open Source (SCA) analysis and uploads result to Snyk.
       - name: Snyk Open Source monitor
@@ -81,3 +83,5 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: snyk-code.sarif
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
