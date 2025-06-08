@@ -37,8 +37,8 @@ jobs:
         with:
           node-version: 18
 
-      - name: Install dependencies (if needed)
-        run: npm install
+      # - name: Install dependencies (if needed)
+      #   run: npm install
 
       - name: Run Snyk Code (SARIF output)
         run: snyk code test --sarif > snyk-code.sarif || true
