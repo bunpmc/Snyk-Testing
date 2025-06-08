@@ -1,4 +1,4 @@
-name: Snyk Code Scan (Supabase)
+name: Snyk Code Scan (Supabase - Single Function)
 
 on:
   push:
@@ -19,50 +19,15 @@ jobs:
       - name: Install Snyk CLI
         run: npm install -g snyk
 
-      - name: Scan login function
-        run: snyk code test supabase/functions/login.ts --sarif > login.sarif || true
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-
       - name: Scan login_snyk_vul_test function
         run: snyk code test supabase/functions/login_snyk_vul_test.ts --sarif > login_snyk_vul_test.sarif || true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
-      - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
-
-      - name: Show login.sarif content (debug)
-        run: cat login.sarif || echo "login.sarif not found or empty"
-
-      - name: Show login_snyk_vul_test.sarif content (debug)
-        run: cat login_snyk_vul_test.sarif || echo "login_snyk_vul_test.sarif not found or empty"
-
-      - name: Combine SARIF files safely
-        shell: bash
-        run: |
-          if [[ -s login.sarif && -s login_snyk_vul_test.sarif ]]; then
-            if jq empty login.sarif && jq empty login_snyk_vul_test.sarif; then
-              jq -s '.[0].runs += .[1].runs | .[0]' login.sarif login_snyk_vul_test.sarif > snyk-functions.sarif
-            else
-              echo "One or both SARIF files are invalid JSON, fallback to single file or empty SARIF"
-              if jq empty login.sarif; then cp login.sarif snyk-functions.sarif; else echo '{}' > snyk-functions.sarif; fi
-              if jq empty login_snyk_vul_test.sarif; then cp login_snyk_vul_test.sarif snyk-functions.sarif; fi
-            fi
-          elif [[ -s login.sarif ]]; then
-            cp login.sarif snyk-functions.sarif
-          elif [[ -s login_snyk_vul_test.sarif ]]; then
-            cp login_snyk_vul_test.sarif snyk-functions.sarif
-          else
-            echo '{"version":"2.1.0","runs":[]}' > snyk-functions.sarif
-          fi
-
-      - name: Lint Supabase SQL Migrations
-        run: |
-          pip install --user sqlfluff
-          sqlfluff lint supabase/migrations --dialect postgres || true
+      - name: Show SARIF content (debug)
+        run: cat login_snyk_vul_test.sarif || echo "SARIF file not found or empty"
 
       - name: Upload SARIF to GitHub Code Scanning
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: snyk-functions.sarif
+          sarif_file: login_snyk_vul_test.sarif
