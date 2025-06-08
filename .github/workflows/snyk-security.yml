@@ -42,10 +42,8 @@ jobs:
 
       # Optional: Scan SQL with a custom linter (e.g., sqlfluff or pg_query_lint)
       # Uncomment if you want SQL checking too
-      - name: Lint SQL Migrations
-        run: |
-          pip install sqlfluff
-          sqlfluff lint supabase/migrations
+      - name: Lint Supabase SQL Migrations
+        run: pip install --user sqlfluff > sqlfluff lint supabase/migrations --dialect postgres
 
       - name: Upload SARIF to GitHub Code Scanning
         uses: github/codeql-action/upload-sarif@v2
