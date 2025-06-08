@@ -1,30 +1,56 @@
 name: Snyk Code Scan (Supabase)
-
 on:
   push:
     branches: [main]
   pull_request:
-
 permissions:
   security-events: write  # Required to upload code scanning results
-
 jobs:
   snyk:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-
+      
       - name: Install Snyk CLI
         run: npm install -g snyk
-
-      - name: Run Snyk Code scan on login_snyk_vul_test/index.ts
+      
+      - name: Authenticate Snyk
+        run: snyk auth ${{ secrets.SNYK_TOKEN }}
+      
+      - name: Run Snyk Code scan on login_snyk_vul_test
         run: |
-          snyk code test supabase/functions/login_snyk_vul_test --sarif > login_snyk_vul_test.sarif || echo '{"version":"2.1.0","runs":[]}' > login_snyk_vul_test.sarif
+          if snyk code test supabase/functions/login_snyk_vul_test --sarif > login_snyk_vul_test.sarif; then
+            echo "Snyk scan completed successfully"
+          else
+            echo "Snyk scan failed or no issues found, creating minimal valid SARIF"
+            cat << 'EOF' > login_snyk_vul_test.sarif
+          {
+            "version": "2.1.0",
+            "runs": [
+              {
+                "tool": {
+                  "driver": {
+                    "name": "Snyk Code",
+                    "version": "1.0.0"
+                  }
+                },
+                "results": []
+              }
+            ]
+          }
+          EOF
+          fi
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-
+      
+      - name: Check SARIF file content
+        run: |
+          echo "SARIF file content:"
+          cat login_snyk_vul_test.sarif
+          echo "SARIF file size:"
+          ls -la login_snyk_vul_test.sarif
+      
       - name: Upload SARIF to GitHub Code Scanning
         uses: github/codeql-action/upload-sarif@v3
         with:
