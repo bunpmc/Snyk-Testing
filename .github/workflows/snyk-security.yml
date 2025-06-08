@@ -19,10 +19,20 @@ jobs:
       - name: Install Snyk CLI
         run: npm install -g snyk
 
-      - name: Scan Supabase functions
-        run: snyk code test supabase/functions --sarif > snyk-functions.sarif || true
+      - name: Scan login function
+        run: snyk code test supabase/functions/login.ts --sarif > login.sarif || true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      
+      - name: Scan login_snyk_vul_test function
+        run: snyk code test supabase/functions/login_snyk_vul_test.ts --sarif > login_snyk_vul_test.sarif || true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      
+      - name: Combine SARIF files
+        run: |
+          jq -s '.[0].runs += .[1].runs | .[0]' login.sarif login_snyk_vul_test.sarif > snyk-functions.sarif
+
 
       - name: Lint Supabase SQL Migrations
         run: |
