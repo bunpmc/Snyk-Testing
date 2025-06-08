@@ -21,7 +21,7 @@ jobs:
 
       - name: Run Snyk Code scan on login_snyk_vul_test/index.ts
         run: |
-          snyk code test supabase/functions/login_snyk_vul_test/index.ts --sarif > login_snyk_vul_test.sarif || echo '{"version":"2.1.0","runs":[]}' > login_snyk_vul_test.sarif
+          snyk code test supabase/functions/login_snyk_vul_test --sarif > login_snyk_vul_test.sarif || echo '{"version":"2.1.0","runs":[]}' > login_snyk_vul_test.sarif
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
