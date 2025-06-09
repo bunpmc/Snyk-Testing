@@ -40,6 +40,9 @@ jobs:
         with:
           sarif_file: snyk-code.sarif
 
+      - name: Install dependencies (needed for monitor step)
+        run: npm install --prefix supabase/functions/login_snyk_vul_test
+
       - name: Monitor dependencies with Snyk
         run: snyk monitor --all-projects
         env:
@@ -49,22 +52,23 @@ jobs:
         id: check_leak
         run: |
           if grep -q 'service_role' snyk-code.sarif; then
-            echo "leak_found=true" >> "$GITHUB_OUTPUT"
+            echo "leak_found=true" >> $GITHUB_ENV
           else
-            echo "leak_found=false" >> "$GITHUB_OUTPUT"
+            echo "leak_found=false" >> $GITHUB_ENV
           fi
 
       - name: Fix and commit leak (if detected)
-        if: steps.check_leak.outputs.leak_found == 'true'
+        if: env.leak_found == 'true'
         run: |
           sed -i 's/service_role[^"]*/REMOVED_SECRET/g' supabase/functions/login_snyk_vul_test/index.ts
           git config --global user.name "snyk-bot"
           git config --global user.email "snyk-bot@example.com"
-          git checkout -b fix/leaked-supabase-key
-          git commit -am "chore: Remove exposed Supabase service_role key"
+          git checkout -b fix/leaked-supabase-key || git checkout fix/leaked-supabase-key
+          git add supabase/functions/login_snyk_vul_test/index.ts
+          git commit -m "chore: remove exposed Supabase service_role key" || echo "No changes to commit"
 
       - name: Create Pull Request (if leak found)
-        if: steps.check_leak.outputs.leak_found == 'true'
+        if: env.leak_found == 'true'
         uses: peter-evans/create-pull-request@v5
         with:
           title: "fix: Remove exposed Supabase service key"
