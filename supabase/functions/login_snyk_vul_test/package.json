@@ -35,7 +35,7 @@
     "validator": "10.11.0",
     "ws": "7.4.6",
     "yargs": "13.3.2",
-    "event-stream": "3.3.6"
+    "event-stream": "3.3.4"
   },
   "devDependencies": {
     "@types/node": "12.12.54",
