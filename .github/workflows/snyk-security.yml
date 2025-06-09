@@ -16,19 +16,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Set up Snyk CLI
-        uses: snyk/actions/setup@806182742461562b67788a64410098c9d9b96adb
+        uses: snyk/actions/setup@v2
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
-      - name: Snyk Code Test (SARIF output)
-        run: snyk code test supabase/functions/login_snyk_vul_test --sarif-file-output=snyk-code.sarif || true
+      - name: Run Snyk Code test (SARIF output)
+        run: snyk code test supabase/functions/login_snyk_vul_test --sarif > snyk-code.sarif || true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
-      - name: Upload to GitHub Code Scanning
+      - name: Upload SARIF to GitHub Code Scanning
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: snyk-code.sarif
+
+      - name: Monitor dependencies with Snyk
+        run: snyk monitor --all-projects
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
